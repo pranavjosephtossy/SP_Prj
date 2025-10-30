@@ -3,6 +3,7 @@ import sqlite3
 from flask import Flask, render_template, request, Response, redirect, url_for, flash, session, send_from_directory, abort, send_file
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
+import html
 
 
 app = Flask(__name__)
@@ -67,11 +68,13 @@ def redirect_handler():
 def comments():
     if request.method == 'POST':
         username = request.form['username']
+        sanit_username= html.escape(username)
         comment_text = request.form['comment']
+        sanit_text = html.escape(comment_text)
 
         # Insert comment into the database
         insert_comment_query = text("INSERT INTO comments (username, text) VALUES (:username, :text)")
-        db.session.execute(insert_comment_query, {'username': username, 'text': comment_text})
+        db.session.execute(insert_comment_query, {'username': sanit_username, 'text': sanit_text})
         db.session.commit()
         return redirect(url_for('comments'))
 
@@ -127,7 +130,8 @@ from flask import request
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('query')
-    return render_template('search.html', query=query)
+    sanit_query=html.escape(query)
+    return render_template('search.html', query=sanit_query)
 
 @app.route('/forum')
 def forum():
