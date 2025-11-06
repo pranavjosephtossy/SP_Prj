@@ -1,5 +1,7 @@
 # XSS
 ## Stored XSS
-When commenting site was vulnerable to attacks such as insertion of alert tags.
+The site allows raw input for both username and comments. A malicious actor could add in code, for example a script tag, as either the username or cooment. What this would do is when the comment is "published", another user who opens the comments section would "execute" this line of code, basically carrying out the code left by the attacker. This is solved by using the html.escape fuction which prevents this from happening by "escaping" the special characters needed for this to take place.
 ## Reflected XSS
-When searching site was vulnerable to attacks such as insertion of malicious code
+The site allows for raw input into the search bar. This means a malicious actor could misuse the search function by inputting malicious code. They could gain unnecessary information like information regrading the server and use it later in a sophisticated attack. This is solved by using the html.escape fuction which prevents this from happening by "escaping" the special characters needed for this to take place.
+# Path Traversal
+The site allowed the download of files from /docs directory. This was because the user could input into the searc bar the localhost ip followed by "download?file=lie.pdf". Malicious actors could traverse directories like this and download restricted files. This was fixed by using os.path.normpath which ensures the path starts with the base directory preventing traversel.
