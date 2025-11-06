@@ -92,11 +92,11 @@ def download():
     base_directory = os.path.join(os.path.dirname(__file__), 'docs')
 
     # Construct the file path to attempt to read the file
-    file_path = os.path.abspath(os.path.join(base_directory, file_name))
+    file_path = os.path.normpath(os.path.abspath(os.path.join(base_directory, file_name)))
 
     # Ensure that the file path is within the base directory
-    #if not file_path.startswith(base_directory):
-     #   return "Unauthorized access attempt!", 403
+    if not file_path.startswith(base_directory):
+        return "Unauthorized access attempt!", 403
 
     # Try to open the file securely
     try:
