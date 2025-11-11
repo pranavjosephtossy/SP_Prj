@@ -73,7 +73,9 @@ def comments():
         #sanit_text = html.escape(comment_text)
 
         # Insert comment into the database
-        insert_comment_query = text("INSERT INTO comments (username, text) VALUES (:username, :text)")
+        insert_comment_query = text(
+            "INSERT INTO comments (username, text) VALUES (:username, :text)"
+            )
         #db.session.execute(insert_comment_query, {'username': sanit_username, 'text': sanit_text})
         db.session.execute(insert_comment_query, {'username': username, 'text': comment_text})
         db.session.commit()
@@ -117,12 +119,12 @@ def download_page():
 
 @app.route('/profile/<int:user_id>', methods=['GET'])
 def profile(user_id):
-    query_user = text(f"SELECT * FROM users WHERE id = {user_id}")
-    user = db.session.execute(query_user).fetchone()
+    query_user = text("SELECT * FROM users WHERE id = :id")
+    user = db.session.execute(query_user, {'id': user_id}).fetchone()
 
     if user:
-        query_cards = text(f"SELECT * FROM carddetail WHERE id = {user_id}")
-        cards = db.session.execute(query_cards).fetchall()
+        query_cards = text("SELECT * FROM carddetail WHERE id = :id")
+        cards = db.session.execute(query_cards, {'id': user_id}).fetchall()
         return render_template('profile.html', user=user, cards=cards)
     else:
         return "User not found or unauthorized access.", 403
@@ -147,7 +149,8 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        query = text(f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'")
+        query = text("SELECT * FROM users WHERE username = :username AND password = :password")
+        user = db.session.execute(query, {'username': username, 'password': password}).fetchone()
         user = db.session.execute(query).fetchone()
 
         if user:
