@@ -7,6 +7,13 @@ import html
 
 
 app = Flask(__name__)
+@app.after_request
+def set_security_headers(response):
+    # Prevent our pages from being loaded in iframes (stop clickjacking)
+    response.headers['X-Frame-Options'] = 'DENY'
+    return response
+
+
 app.secret_key = 'trump123'  # Set a secure secret key
 
 # Configure the SQLite database
