@@ -165,8 +165,6 @@ def login():
 
         query = text("SELECT * FROM users WHERE username = :username AND password = :password")
         user = db.session.execute(query, {'username': username, 'password': password}).fetchone()
-        user = db.session.execute(query).fetchone()
-
         if user:
             user_pw=user['password']
             if bcrypt.checkpw(password.encode('utf-8'), user_pw.encode('utf-8')):
@@ -199,4 +197,5 @@ if __name__ == '__main__':
     initialize_database()  # Initialize the database on application startup if it doesn't exist
     with app.app_context():
         db.create_all()  # Create tables based on models if they don't already exist
+        hash_current_passwords()  # Hash existing passwords
     app.run(debug=False)
