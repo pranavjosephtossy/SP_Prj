@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, Response, redirect, url_for, 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import html
+import bcrypt
 
 
 app = Flask(__name__)
@@ -140,6 +141,17 @@ def search():
 def forum():
     return render_template('forum.html')
 
+def hash_current_passwords():
+    query=text("SELECT id, password FROM users")
+    users= db.session.execute(query).fetchall()
+    for user in users:
+        user_id=user[0]
+        pw= user[1]
+        if not pw.startswith('$2b$'):
+            hashpw= bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            query=text("UPDATE users SET password =:hashpw WHERE id=:id")
+            db.session.execute(query,{"hashpw": hashpw, "id":user_id})
+    db.session.commit()
 # Add login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -147,15 +159,20 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        query = text(f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'")
+        query = text(f"SELECT * FROM users WHERE username = '{username}'")
         user = db.session.execute(query).fetchone()
 
         if user:
-            session['user_id'] = user.id
-            flash('Login successful!', 'success')
-            return redirect(url_for('profile', user_id=user.id))
+            user_pw=user['password']
+            if bcrypt.checkpw(password.encode('utf-8'), user_pw.encode('utf-8')):
+                session['user_id'] = user['id']
+                flash('Login successful!', 'success')
+                return redirect(url_for('profile', user_id=user.id))
+            else:
+                error = 'Invalid Credentials. Please try again.'
+                return render_template('login.html', error=error)
         else:
-            error = 'Invalid Credentials. Please try again.'
+            error= 'Mismatch.'
             return render_template('login.html', error=error)
 
     return render_template('login.html')
@@ -178,4 +195,5 @@ if __name__ == '__main__':
     initialize_database()  # Initialize the database on application startup if it doesn't exist
     with app.app_context():
         db.create_all()  # Create tables based on models if they don't already exist
+        hash_current_passwords()
     app.run(debug=True)
