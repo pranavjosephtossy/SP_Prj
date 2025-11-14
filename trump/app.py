@@ -3,9 +3,7 @@ import sqlite3
 from flask import Flask, render_template, request, Response, redirect, url_for, flash, session, send_from_directory, abort, send_file
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
-import html
-import bcrypt
-
+from flask import render_template, abort, redirect, request ,abort
 
 app = Flask(__name__)
 app.secret_key = 'trump123'  # Set a secure secret key
@@ -52,6 +50,9 @@ def sitemap():
     
 @app.route('/admin_panel')
 def admin_panel():
+    key = request.args.get('key')
+    if key != 'ADMINPASS1234':
+        abort(403)  # Forbidden
     return render_template('admin_panel.html')
 
 # Route to handle redirects based on the destination query parameter
@@ -59,23 +60,20 @@ def admin_panel():
 def redirect_handler():
     destination = request.args.get('destination')
 
-    if destination:
-        return redirect(destination)
-    else:
-        return "Invalid destination", 400
+    if not destination.startswith("/"):
+        abort(400)
 
+
+    return redirect(destination)
 
 @app.route('/comments', methods=['GET', 'POST'])
 def comments():
     if request.method == 'POST':
         username = request.form['username']
-        #sanit_username= html.escape(username)
         comment_text = request.form['comment']
-        #sanit_text = html.escape(comment_text)
 
         # Insert comment into the database
         insert_comment_query = text("INSERT INTO comments (username, text) VALUES (:username, :text)")
-        #db.session.execute(insert_comment_query, {'username': sanit_username, 'text': sanit_text})
         db.session.execute(insert_comment_query, {'username': username, 'text': comment_text})
         db.session.commit()
         return redirect(url_for('comments'))
@@ -94,11 +92,11 @@ def download():
     base_directory = os.path.join(os.path.dirname(__file__), 'docs')
 
     # Construct the file path to attempt to read the file
-    file_path = os.path.normpath(os.path.abspath(os.path.join(base_directory, file_name)))
+    file_path = os.path.abspath(os.path.join(base_directory, file_name))
 
     # Ensure that the file path is within the base directory
-    if not file_path.startswith(base_directory):
-        return "Unauthorized access attempt!", 403
+    #if not file_path.startswith(base_directory):
+     #   return "Unauthorized access attempt!", 403
 
     # Try to open the file securely
     try:
@@ -118,6 +116,10 @@ def download_page():
 
 @app.route('/profile/<int:user_id>', methods=['GET'])
 def profile(user_id):
+
+    if session.get("user_id") != user_id:
+        abort(404)
+
     query_user = text(f"SELECT * FROM users WHERE id = {user_id}")
     user = db.session.execute(query_user).fetchone()
 
@@ -132,26 +134,12 @@ from flask import request
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('query')
-    #sanit_query=html.escape(query)
-    #return render_template('search.html', query=sanit_query)
     return render_template('search.html', query=query)
-
 
 @app.route('/forum')
 def forum():
     return render_template('forum.html')
 
-def hash_current_passwords():
-    query=text("SELECT id, password FROM users")
-    users= db.session.execute(query).fetchall()
-    for user in users:
-        user_id=user[0]
-        pw= user[1]
-        if not pw.startswith('$2b$'):
-            hashpw= bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            query=text("UPDATE users SET password =:hashpw WHERE id=:id")
-            db.session.execute(query,{"hashpw": hashpw, "id":user_id})
-    db.session.commit()
 # Add login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -159,20 +147,15 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        query = text(f"SELECT * FROM users WHERE username = '{username}'")
+        query = text(f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'")
         user = db.session.execute(query).fetchone()
 
         if user:
-            user_pw=user['password']
-            if bcrypt.checkpw(password.encode('utf-8'), user_pw.encode('utf-8')):
-                session['user_id'] = user['id']
-                flash('Login successful!', 'success')
-                return redirect(url_for('profile', user_id=user.id))
-            else:
-                error = 'Invalid Credentials. Please try again.'
-                return render_template('login.html', error=error)
+            session['user_id'] = user.id
+            flash('Login successful!', 'success')
+            return redirect(url_for('profile', user_id=user.id))
         else:
-            error= 'Mismatch.'
+            error = 'Invalid Credentials. Please try again.'
             return render_template('login.html', error=error)
 
     return render_template('login.html')
@@ -195,5 +178,4 @@ if __name__ == '__main__':
     initialize_database()  # Initialize the database on application startup if it doesn't exist
     with app.app_context():
         db.create_all()  # Create tables based on models if they don't already exist
-        hash_current_passwords()
     app.run(debug=True)

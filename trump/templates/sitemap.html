@@ -7,9 +7,9 @@
         <h2 style="text-align: center;">Site Map</h2>
 
         <ul style="list-style-type: none; padding: 0;">
-            <li><a href="{{ url_for('redirect_handler', destination='quotes') }}">Quotes</a></li><br>
-            <li><a href="{{ url_for('redirect_handler', destination='comments') }}">Comments</a></li><br>
-            <li><a href="{{ url_for('redirect_handler', destination='downloads') }}">Downloads</a></li>
+            <li><a href="{{ url_for('redirect_handler', destination='/quotes') }}">Quotes</a></li><br>
+            <li><a href="{{ url_for('redirect_handler', destination='/comments') }}">Comments</a></li><br>
+            <li><a href="{{ url_for('redirect_handler', destination='/downloads') }}">Downloads</a></li>
 			<li style="display: none;"><a href="/admin_panel">Admin Panel</a></li>
         </ul>
     </div>
