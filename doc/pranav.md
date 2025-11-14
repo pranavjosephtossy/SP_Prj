@@ -39,26 +39,38 @@ This is solved by either sanitizing the user input or using the `{{ query }}` wi
 
 
 ## Path Traversal
-The site allowed the download of files from /docs directory. This was because the user could input into the searc bar the localhost ip followed by "download?file=lies.pdf". Malicious actors could traverse directories like this and download restricted files.
-[Screenshot](pics/pathtrav/pathtrav1.png)
+This site allowed the movement/traveral from one directory to another. This is a big vulnerabilty because a malicious user to navigate to beyond what the user is supposed to see. Malicious actors could traverse directories like this and download restricted files. Granted while they wouldnt known the exact structure, they could still try multiple possibilites, taking advantage of comman structures and directory names.
+![Screenshot](pics/pathtrav/pathtrav1.png)
 
 This is where the vulnerability in the code was spotted:
-[Screenshot](pics/pathtrav/pathtarv2.png)
+![Screenshot](pics/pathtrav/pathtrav2.png)
+In this project, malicious actor can input into the search bar of the browser, as a suffix the following `/download?file=../trump.db`. As seen in the first screenshot, this enables the download of the entire database which is a major breach. This is becose `.abspath()` converts a path into an absolute path without checking if it stays inside the directory
 
- This was fixed by using os.path.normpath which ensures the path starts with the base directory preventing traversel.
- [Screenshot](pics/pathtrav/pathtarv3.png)
+ This was fixed by using `os.path.normpath` which ensures the path starts with the base directory preventing traversel.
+![Screenshot](pics/pathtrav/pathtrav3.png)
+
+The exploit no longer works:
+![Screenshot](pics/pathtrav/pathtrav4.png)
+
 # Unknown
 ## Cryptographic Failures
-While fixing the access control vulnerability was able to prevent download of .db if the db was ever leaked, plaintext passwords of users would be leaked. This could be used by malicious users to used said leaked password on other account belonging to the user in the hope that the user reuses passwords.
+While fixing the path traversal vulnerability was able to prevent download of .db, if the db was ever leaked, plaintext passwords of users would be leaked. This could be used by malicious users to used said leaked password on other account belonging to the user in the hope that the user reuses passwords.
 ![Screenshot](pics/unknown/cf1.png)
 
 The password was not stored in a secure format in the db. It was not hashed. As per the lastes OWSP top 10 list, cryptographic failures were listed as the 2 hishest risk. This means if the db was compromised an attacker would have all the user passwords and it could be interpreted imediately. This is where the vulnerability in the code was spotted:
 ![Screenshot](pics/unknown/cf2.png)
 
-This was fixed by first hashing all the previous passwords and comparing the hashs of the user password and the hash of the user input. A function to carry out previously entered unhashed passwords:
-[Screenshot](pics/unknown/cf3.png)
-And an updated login:
-[Screenshot](pics/unknown/cf4.png)
+This was fixed by first hashing all the previous passwords and comparing the hashs of the user password and the hash of the user input. A function to carry out previously entered unhashed passwords was made and "called" evrytime at the "start":
+![Screenshot](pics/unknown/cf3.png)
+
+The `hash_current_passwords()` functions connects to the db and hashs all the passwords. It is called inside:
+![Screenshot](pics/unknown/cfa.png)
+immediately after the db is created
+
+And an updated login to compare hashs and not decrypted passwords:
+![Screenshot](pics/unknown/cf4.png)
+
+
 Heres what the db would look like if the hacker still managed to access it:
-[Screenshot](pics/unknown/cryptfail.png)
+![Screenshot](pics/unknown/cryptfail.png)
 Even if they are able to obtain the hashs its harder and more time consuming than having access to the plaintext password
