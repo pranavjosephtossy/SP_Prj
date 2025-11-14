@@ -7,6 +7,11 @@ from flask import render_template, abort, redirect, request ,abort
 import bcrypt
 
 app = Flask(__name__)
+@app.after_request
+def set_security_headers(response):
+    # Prevent our pages from being loaded in iframes (stop clickjacking)
+    response.headers['X-Frame-Options'] = 'DENY'
+    return response
 app.secret_key = 'trump123'  # Set a secure secret key
 
 # Configure the SQLite database
@@ -160,8 +165,8 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        query = text(f"SELECT * FROM users WHERE username = '{username}'")
-        user = db.session.execute(query).fetchone()
+        query = text("SELECT * FROM users WHERE username = :username AND password = :password")
+        user = db.session.execute(query, {'username': username, 'password': password}).fetchone()
 
         if user:
             user_pw=user['password']
@@ -196,4 +201,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create tables based on models if they don't already exist
         hash_current_passwords()
-    app.run(debug=True)
+    app.run(debug=False)
