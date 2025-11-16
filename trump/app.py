@@ -7,11 +7,13 @@ from flask import render_template, abort, redirect, request ,abort
 import bcrypt
 
 app = Flask(__name__)
+
 @app.after_request
 def set_security_headers(response):
     # Prevent our pages from being loaded in iframes (stop clickjacking)
     response.headers['X-Frame-Options'] = 'DENY'
     return response
+    
 app.secret_key = 'trump123'  # Set a secure secret key
 
 # Configure the SQLite database
@@ -173,9 +175,9 @@ def login():
         query = text("SELECT * FROM users WHERE username = :username")
         user= db.session.execute(query, {'username': username}).fetchone()
         if user:
-            user_pw=user.password
+            user_pw=user[2]
             if bcrypt.checkpw(password.encode('utf-8'), user_pw.encode('utf-8')):
-                session['user_id'] = user['id']
+                session['user_id'] = user[0]
                 flash('Login successful!', 'success')
                 return redirect(url_for('profile', user_id=user.id))
             else:
