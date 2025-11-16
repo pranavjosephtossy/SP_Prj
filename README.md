@@ -1,4 +1,2 @@
 # SP_Prj
-By now you probably already know how to use git hub. Each of us make a branch of the main and work off on our own branch. If u have any questions lmk.
-
-to view pdf on vsc use extention: vscode-pdf
+please ignore /doc, it was supposed to be where we "updated" our draft report. The final report is in /SP_PRJ.
