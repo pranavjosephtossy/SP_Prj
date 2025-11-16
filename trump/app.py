@@ -33,10 +33,13 @@ class User(db.Model):
 
 # Function to run the SQL script if database doesn't exist
 def initialize_database():
-    if not os.path.exists('trump.db'):
-        with sqlite3.connect('trump.db') as conn:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    sql_path =os.path.join(base_dir, "trump.sql")
+    db_path =os.path.join(base_dir, "trump.db")
+    if not os.path.exists(db_path):
+        with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
-            with open('trump.sql', 'r') as sql_file:
+            with open(sql_path, 'r') as sql_file:
                 sql_script = sql_file.read()
             cursor.executescript(sql_script)
             print("Database initialized with script.")
@@ -165,11 +168,12 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        query = text("SELECT * FROM users WHERE username = :username AND password = :password")
-        user = db.session.execute(query, {'username': username, 'password': password}).fetchone()
-
+        #query = text("SELECT * FROM users WHERE username = :username AND password = :password")
+        #user = db.session.execute(query, {'username': username, 'password': password}).fetchone()
+        query = text("SELECT * FROM users WHERE username = :username")
+        user= db.session.execute(query, {'username': username}).fetchone()
         if user:
-            user_pw=user['password']
+            user_pw=user.password
             if bcrypt.checkpw(password.encode('utf-8'), user_pw.encode('utf-8')):
                 session['user_id'] = user['id']
                 flash('Login successful!', 'success')
